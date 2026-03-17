@@ -7,8 +7,8 @@ const analyticsRouter = express.Router();
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
-router.get('/', (req, res) => {
-  res.json({ leads: store.getLeads(req.query.campaignId) });
+router.get('/', async (req, res) => {
+  res.json({ leads: await store.getLeads(req.query.campaignId) });
 });
 
 router.post('/upload', upload.single('csv'), (req, res) => {
@@ -28,17 +28,18 @@ router.post('/upload', upload.single('csv'), (req, res) => {
   }
 });
 
-router.patch('/:id/reply', (req, res) => {
-  const lead = store.updateLead(req.params.id, { status: 'replied' });
+router.patch('/:id/reply', async (req, res) => {
+  const lead = await store.updateLead(req.params.id, { status: 'replied' });
   if (!lead) return res.status(404).json({ error: 'Not found' });
-  const emails = store.getEmails().filter(e => e.leadId === lead.id);
-  if (emails.length) store.updateEmail(emails[emails.length - 1].id, { status: 'replied' });
+  const allEmails = await store.getEmails();
+  const emails = allEmails.filter(e => e.leadId === lead.id);
+  if (emails.length) await store.updateEmail(emails[emails.length - 1].id, { status: 'replied' });
   res.json({ lead });
 });
 
-analyticsRouter.get('/', (req, res) => res.json(store.getAnalytics()));
-analyticsRouter.get('/activity', (req, res) => {
-  const emails = store.getEmails();
+analyticsRouter.get('/', async (req, res) => res.json(await store.getAnalytics()));
+analyticsRouter.get('/activity', async (req, res) => {
+  const emails = await store.getEmails();
   const days = [];
   for (let i = 6; i >= 0; i--) {
     const day = new Date(); day.setDate(day.getDate() - i);

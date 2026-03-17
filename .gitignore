@@ -1,0 +1,8 @@
+node_modules/
+.env
+db.json
+.vscode/
+dist/
+build/
+.DS_Store
+*.local

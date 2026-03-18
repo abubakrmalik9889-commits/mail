@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const { name, templateId, leads: rawLeads } = req.body;
+  const { name, templateId, leads: rawLeads, smtpConfig } = req.body;
   if (!name || !templateId || !rawLeads?.length) return res.status(400).json({ error: 'name, templateId, and leads are required' });
   const template = await store.getTemplate(templateId);
   if (!template) return res.status(404).json({ error: 'Template not found' });
@@ -25,7 +25,7 @@ router.post('/', async (req, res) => {
   let sent = 0;
   for (const lead of leads) {
     try {
-      const result = await sendEmail({ to: lead.email, toName: lead.name, subject: template.subject, body: template.body, variables: { name: lead.name, company: lead.company || '' } });
+      const result = await sendEmail({ to: lead.email, toName: lead.name, subject: template.subject, body: template.body, variables: { name: lead.name, company: lead.company || '' }, smtpConfig });
       await store.createEmail({ leadId: lead.id, campaignId: campaign.id, type: 'initial', subject: template.subject, status: 'sent', messageId: result.messageId, sentAt: new Date().toISOString() });
       await store.updateLead(lead.id, { status: 'sent' });
       sent++;

@@ -4,17 +4,18 @@ function renderTemplate(text, variables) {
   return text.replace(/\{\{(\w+)\}\}/g, (_, key) => variables[key] || ('{{' + key + '}}'));
 }
 
-function createTransporter() {
+function createTransporter(config = {}) {
+  // Use provided config or fall back to environment variables
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
+    host: config.smtpHost || process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(config.smtpPort || process.env.SMTP_PORT || '587'),
     secure: false,
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    auth: { user: config.user || process.env.SMTP_USER, pass: config.pass || process.env.SMTP_PASS },
   });
 }
 
-async function sendEmail({ to, toName, subject, body, variables = {} }) {
-  const allVars = { name: toName || to, email: to, sender_name: process.env.FROM_NAME || 'Team', ...variables };
+async function sendEmail({ to, toName, subject, body, variables = {}, smtpConfig = {} }) {
+  const allVars = { name: toName || to, email: to, sender_name: (smtpConfig.fromName || process.env.FROM_NAME || 'Team'), ...variables };
   const renderedSubject = renderTemplate(subject, allVars);
   const renderedBody = renderTemplate(body, allVars);
 
@@ -28,7 +29,7 @@ async function sendEmail({ to, toName, subject, body, variables = {} }) {
   </style></head><body>
   <div class="w">
     <div class="h"><span class="ht">MailFlow</span></div>
-    <div class="b">${renderedBody.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div>
+    <div class="b">${renderedBody.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</div>
     <div class="f"><span>Sent via MailFlow</span><a href="#">Unsubscribe</a></div>
   </div></body></html>`;
 
@@ -37,13 +38,10 @@ async function sendEmail({ to, toName, subject, body, variables = {} }) {
     return { messageId: 'demo_' + Date.now(), preview: null };
   }
 
-  const transporter = createTransporter();
+  const transporter = createTransporter(smtpConfig);
   const info = await transporter.sendMail({
-    from: '"' + (process.env.FROM_NAME || 'MailFlow') + '" <' + process.env.FROM_EMAIL + '>',
+    from: '"' + (smtpConfig.fromName || process.env.FROM_NAME || 'MailFlow') + '" <' + (smtpConfig.fromEmail || process.env.FROM_EMAIL) + '>',
     to: '"' + toName + '" <' + to + '>',
-    subject: renderedSubject,
-    text: renderedBody,
-    html: htmlBody,
   });
   return { messageId: info.messageId };
 }

@@ -13,11 +13,13 @@ app.use((req, res, next) => { console.log(new Date().toISOString().slice(11, 19)
 const campaignsRouter = require('./routes/campaigns');
 const templatesRouter = require('./routes/templates');
 const { leadsRouter, analyticsRouter } = require('./routes/leads');
+const aiRouter = require('./routes/ai');
 
 app.use('/api/campaigns', campaignsRouter);
 app.use('/api/templates', templatesRouter);
 app.use('/api/leads', leadsRouter);
 app.use('/api/analytics', analyticsRouter);
+app.use('/api/ai', aiRouter);
 app.get('/api/health', (req, res) => res.json({ status: 'ok', demo: process.env.DEMO_MODE === 'true', timestamp: new Date().toISOString() }));
 
 const store = require('./store');

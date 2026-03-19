@@ -5,7 +5,7 @@ const cron = require('node-cron');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5173'] }));
+app.use(cors({ origin: true })); // Allow all origins (restrict to your Vercel domain in production)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use((req, res, next) => { console.log(new Date().toISOString().slice(11, 19), req.method, req.path); next(); });
